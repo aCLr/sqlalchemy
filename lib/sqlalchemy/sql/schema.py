@@ -376,6 +376,7 @@ class Table(DialectKWArgs, SchemaItem, TableClause):
 
          .. versionadded:: 1.2 Added the :paramref:`.Table.comment` parameter
             to :class:`.Table`.
+    :param partition_by: expression for create partitions.
 
     :param \**kw: Additional keyword arguments not mentioned above are
         dialect specific, and passed in the form ``<dialectname>_<argname>``.
@@ -501,6 +502,7 @@ class Table(DialectKWArgs, SchemaItem, TableClause):
         self.implicit_returning = kwargs.pop('implicit_returning', True)
 
         self.comment = kwargs.pop('comment', None)
+        self.partition_by = kwargs.pop('partition_by', None)
 
         if 'info' in kwargs:
             self.info = kwargs.pop('info')
@@ -588,10 +590,10 @@ class Table(DialectKWArgs, SchemaItem, TableClause):
                 if c.name not in include_columns:
                     self._columns.remove(c)
 
-        for key in ('quote', 'quote_schema'):
+        for key in ('quote', 'quote_schema', 'partiton_by'):
             if key in kwargs:
                 raise exc.ArgumentError(
-                    "Can't redefine 'quote' or 'quote_schema' arguments")
+                    "Can't redefine 'quote', 'quote_schema' or 'partiton_by' arguments")
 
         if 'comment' in kwargs:
             self.comment = kwargs.pop('comment', None)

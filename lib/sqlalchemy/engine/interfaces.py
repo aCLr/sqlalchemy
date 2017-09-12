@@ -84,6 +84,10 @@ class Dialect(object):
       Indicate whether the DB-API can receive SQL statements as Python
       unicode strings
 
+    supports_partitioning
+      Indicate whether the dialect supports PARTITION BY clause
+      of CREATE TABLE statement
+
     supports_unicode_binds
       Indicate whether the DB-API can receive string bind parameters
       as Python unicode strings

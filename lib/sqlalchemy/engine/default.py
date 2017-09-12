@@ -42,6 +42,7 @@ class DefaultDialect(interfaces.Dialect):
     preparer = compiler.IdentifierPreparer
     supports_alter = True
     supports_comments = False
+    supports_partitioning = False
     inline_comments = False
 
     # the first value we'd get for an autoincrement

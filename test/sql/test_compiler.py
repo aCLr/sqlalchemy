@@ -12,8 +12,7 @@ styling and coherent test organization.
 
 from sqlalchemy.testing import eq_, is_, assert_raises, \
     assert_raises_message, eq_ignore_whitespace
-from sqlalchemy import testing
-from sqlalchemy.testing import fixtures, AssertsCompiledSQL
+from sqlalchemy.testing import fixtures, AssertsCompiledSQL, engines
 from sqlalchemy import Integer, String, MetaData, Table, Column, select, \
     func, not_, cast, text, tuple_, exists, update, bindparam,\
     literal, and_, null, type_coerce, alias, or_, literal_column,\
@@ -25,7 +24,7 @@ from sqlalchemy.util import u
 from sqlalchemy import exc, sql, util, types, schema
 from sqlalchemy.sql import table, column, label
 from sqlalchemy.sql.expression import ClauseList, _literal_as_text, HasPrefixes
-from sqlalchemy.engine import default
+from sqlalchemy.engine import default, base
 from sqlalchemy.dialects import mysql, mssql, postgresql, oracle, \
     sqlite, sybase
 from sqlalchemy.ext.compiler import compiles
@@ -3223,6 +3222,28 @@ class DDLTest(fixtures.TestBase, AssertsCompiledSQL):
             "CREATE TABLE t1 SOME SUFFIX (q INTEGER)",
             dialect=MyDialect()
         )
+
+    def test_partition_by_not_supported(self):
+        t1 = Table('t1', MetaData(), Column('q', Integer), partition_by='q')
+        engine = engines.testing_engine('sqlite://')
+        assert_raises(exc.ArgumentError, schema.CreateTable(t1, bind=engine).compile)
+
+    def test_partition_by_column(self):
+        col = Column('col1', Integer)
+        t1 = Table('t1', MetaData(), col, partition_by=col)
+        self.assert_compile(
+            schema.CreateTable(t1),
+            'CREATE TABLE t1 (col1 INTEGER) PARTITION BY col1'
+        )
+
+    def test_partition_by_text(self):
+        col = Column('col1', Integer)
+        t1 = Table('t1', MetaData(), col, partition_by='some expression')
+        self.assert_compile(
+            schema.CreateTable(t1),
+            'CREATE TABLE t1 (col1 INTEGER) PARTITION BY some expression'
+        )
+
 
     def test_table_no_cols(self):
         m = MetaData()

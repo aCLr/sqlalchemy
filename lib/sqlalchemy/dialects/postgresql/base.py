@@ -2102,6 +2102,7 @@ class PGDialect(default.DefaultDialect):
         self.implicit_returning = self.server_version_info > (8, 2) and \
             self.__dict__.get('implicit_returning', True)
         self.supports_native_enum = self.server_version_info >= (8, 3)
+        self.supports_partitioning = self.server_version_info >= (10, 0)
         if not self.supports_native_enum:
             self.colspecs = self.colspecs.copy()
             # pop base Enum type

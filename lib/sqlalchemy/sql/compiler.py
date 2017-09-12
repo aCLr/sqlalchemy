@@ -2368,6 +2368,9 @@ class DDLCompiler(Compiled):
     def visit_create_table(self, create):
         table = create.element
         preparer = self.preparer
+        dialect = None
+        if create.bind is not None:
+            dialect = create.bind.dialect
 
         text = "\nCREATE "
         if table._prefixes:
@@ -2409,8 +2412,23 @@ class DDLCompiler(Compiled):
         if const:
             text += separator + "\t" + const
 
-        text += "\n)%s\n\n" % self.post_create_table(table)
+        text += "\n)%s\n" % self.post_create_table(table)
+        if dialect is None or dialect.supports_partitioning:
+            text += '\n %s\n' % self._make_partition_by_clause(table)
+        elif not dialect.supports_partitioning and table.partition_by is not None:
+            raise exc.ArgumentError('partitioning is not supported by dialect %s' % dialect.name)
         return text
+
+    def _make_partition_by_clause(self, table):
+        if table.partition_by is None:
+            return ''
+        clause = 'PARTITION BY '
+        part_by = table.partition_by
+        if isinstance(part_by, util.string_types):
+            clause += part_by
+        elif isinstance(part_by, schema.Column):
+            clause += part_by.description
+        return clause
 
     def visit_create_column(self, create, first_pk=False):
         column = create.element
