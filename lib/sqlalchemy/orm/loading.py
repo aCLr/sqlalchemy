@@ -356,6 +356,7 @@ def _instance_processor(
         is_not_primary_key = _none_set.issuperset
     else:
         is_not_primary_key = _none_set.intersection
+    url = result.connection.engine.url
 
     def _instance(row):
 
@@ -373,7 +374,8 @@ def _instance_processor(
             # session, or we have to create a new one
             identitykey = (
                 identity_class,
-                tuple([row[column] for column in pk_cols])
+                tuple([row[column] for column in pk_cols]),
+                url,
             )
 
             instance = session_identity_map.get(identitykey)

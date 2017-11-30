@@ -881,8 +881,8 @@ class M2OUseGetTest(fixtures.MappedTest):
 
     def test_use_get(self):
         base, sub, related = (self.tables.base,
-                                self.tables.sub,
-                                self.tables.related)
+                              self.tables.sub,
+                              self.tables.related)
 
         # test [ticket:1186]
         class Base(fixtures.BasicEntity):

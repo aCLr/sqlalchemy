@@ -1615,7 +1615,7 @@ class Session(_SessionClassMethods):
             obj = state.obj()
             if obj is not None:
 
-                instance_key = mapper._identity_key_from_state(state)
+                instance_key = mapper._identity_key_from_state(state) + (self.transaction.connection(mapper).engine.url,)
 
                 if _none_set.intersection(instance_key[1]) and \
                         not mapper.allow_partial_pks or \

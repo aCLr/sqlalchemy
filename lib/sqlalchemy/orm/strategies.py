@@ -533,7 +533,7 @@ class LazyLoader(AbstractRelationshipLoader, util.MemoizedSlots):
             if _none_set.issuperset(ident):
                 return None
 
-            ident_key = self.mapper.identity_key_from_primary_key(ident)
+            ident_key = self.mapper.identity_key_from_primary_key(ident) + (session.get_bind(mapper=self.mapper).url,)
             instance = loading.get_from_identity(session, ident_key, passive)
             if instance is not None:
                 return instance
@@ -565,7 +565,6 @@ class LazyLoader(AbstractRelationshipLoader, util.MemoizedSlots):
     @util.dependencies("sqlalchemy.orm.strategy_options")
     def _emit_lazyload(
             self, strategy_options, session, state, ident_key, passive):
-
         q = session.query(self.mapper)._adapt_all_clauses()
         if self.parent_property.secondary is not None:
             q = q.select_from(self.mapper, self.parent_property.secondary)
@@ -585,6 +584,8 @@ class LazyLoader(AbstractRelationshipLoader, util.MemoizedSlots):
             q = q._conditional_options(*state.load_options)
 
         if self.use_get:
+            if len(ident_key) < 3:
+                ident_key += (session.get_bind(mapper=self.mapper).url,)
             return loading.load_on_ident(q, ident_key)
 
         if self.parent_property.order_by:

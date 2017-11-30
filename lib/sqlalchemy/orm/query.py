@@ -873,7 +873,7 @@ class Query(object):
                 "primary key for query.get(); primary key columns are %s" %
                 ','.join("'%s'" % c for c in mapper.primary_key))
 
-        key = mapper.identity_key_from_primary_key(ident)
+        key = mapper.identity_key_from_primary_key(ident) + (self.session.get_bind(mapper).url,)
 
         if not self._populate_existing and \
                 not mapper.always_refresh and \
