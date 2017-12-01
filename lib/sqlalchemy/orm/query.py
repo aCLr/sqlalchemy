@@ -29,7 +29,7 @@ from .base import _entity_descriptor, _is_aliased_class, \
     _is_mapped_class, _orm_columns, _generative, InspectionAttr
 from .path_registry import PathRegistry
 from .util import (
-    AliasedClass, ORMAdapter, join as orm_join, with_parent, aliased, get_url
+    AliasedClass, ORMAdapter, join as orm_join, with_parent, aliased, get_ident_key_with_db_url
 )
 from .. import sql, util, log, exc as sa_exc, inspect, inspection
 from ..sql.expression import _interpret_as_from
@@ -872,8 +872,8 @@ class Query(object):
                 "Incorrect number of values in identifier to formulate "
                 "primary key for query.get(); primary key columns are %s" %
                 ','.join("'%s'" % c for c in mapper.primary_key))
-
-        key = mapper.identity_key_from_primary_key(ident) + (get_url(self.session.get_bind(mapper, **kwargs)),)
+        key = get_ident_key_with_db_url(mapper.identity_key_from_primary_key(ident),
+                                        self.session.get_bind(mapper, **kwargs))
 
         if not self._populate_existing and \
                 not mapper.always_refresh and \

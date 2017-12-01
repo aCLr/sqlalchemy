@@ -1,7 +1,7 @@
 from __future__ import with_statement
 from sqlalchemy import (
     testing, exc as sa_exc, event, String, Column, Table, select, func)
-from sqlalchemy.orm.util import get_url
+from sqlalchemy.orm.util import get_ident_key_with_db_url
 from sqlalchemy.testing import (
     fixtures, engines, eq_, assert_raises, assert_raises_message,
     assert_warnings, mock, expect_warnings)
@@ -1536,9 +1536,9 @@ class NaturalPKRollbackTest(fixtures.MappedTest):
 
         assert u1 in s
         assert u2 in s
-
-        assert s.identity_map[(User, ('u1',), get_url(s.get_bind(mapper=User)),)] is u1
-        assert s.identity_map[(User, ('u2',), get_url(s.get_bind(mapper=User)),)] is u2
+        db_url = s.get_bind(mapper=User).url
+        assert s.identity_map[(User, ('u1',), db_url,)] is u1
+        assert s.identity_map[(User, ('u2',), db_url,)] is u2
 
     def test_multiple_key_replaced_by_update(self):
         users, User = self.tables.users, self.classes.User
@@ -1569,9 +1569,10 @@ class NaturalPKRollbackTest(fixtures.MappedTest):
         assert u2 in s
         assert u3 in s
 
-        assert s.identity_map[(User, ('u1',), get_url(s.get_bind(mapper=User)),)] is u1
-        assert s.identity_map[(User, ('u2',), get_url(s.get_bind(mapper=User)),)] is u2
-        assert s.identity_map[(User, ('u3',), get_url(s.get_bind(mapper=User)),)] is u3
+        db_url = s.get_bind(mapper=User).url
+        assert s.identity_map[(User, ('u1',), db_url,)] is u1
+        assert s.identity_map[(User, ('u2',), db_url,)] is u2
+        assert s.identity_map[(User, ('u3',), db_url,)] is u3
 
     def test_key_replaced_by_oob_insert(self):
         users, User = self.tables.users, self.classes.User
@@ -1595,5 +1596,5 @@ class NaturalPKRollbackTest(fixtures.MappedTest):
 
         assert u1 in s
         assert u2 not in s
-
-        assert s.identity_map[(User, ('u1',), get_url(s.get_bind(mapper=User)))] is u1
+        db_url = s.get_bind(mapper=User).url
+        assert s.identity_map[(User, ('u1',), db_url,)] is u1

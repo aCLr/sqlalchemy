@@ -12,7 +12,7 @@ from .. import util, sql, engine, exc as sa_exc
 from ..sql import util as sql_util, expression
 from . import (
     SessionExtension, attributes, exc, query,
-    loading, identity
+    loading, identity, util as orm_util
 )
 from ..inspection import inspect
 from .base import (
@@ -1615,7 +1615,8 @@ class Session(_SessionClassMethods):
             obj = state.obj()
             if obj is not None:
 
-                instance_key = mapper._identity_key_from_state(state) + (self.transaction.connection(mapper, instance=obj).engine.url,)
+                instance_key = orm_util.get_ident_key_with_db_url(mapper._identity_key_from_state(state),
+                                                                  self.transaction.connection(mapper, instance=obj))
 
                 if _none_set.intersection(instance_key[1]) and \
                         not mapper.allow_partial_pks or \

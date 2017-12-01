@@ -1032,8 +1032,10 @@ def randomize_unitofwork():
         dependency.set = RandomSet
 
 
-def get_url(connectable):
-    try:
-        return connectable.engine.url
-    except AttributeError:
-        return connectable.url
+def get_ident_key_with_db_url(key, connectable):
+    if len(key) != 3:
+        try:
+            key += connectable.url,
+        except AttributeError:
+            key += connectable.engine.url,
+    return key

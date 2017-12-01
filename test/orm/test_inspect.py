@@ -1,5 +1,5 @@
 """test the inspection registry system."""
-from sqlalchemy.orm.util import get_url
+from sqlalchemy.orm.util import get_ident_key_with_db_url
 from sqlalchemy.testing import eq_, assert_raises_message, is_
 from sqlalchemy import exc, util
 from sqlalchemy import inspect
@@ -487,9 +487,10 @@ class TestORMInspection(_fixtures.FixtureTest):
         s.add(u1)
         s.flush()
         insp = inspect(u1)
+        db_url = s.get_bind(mapper=User).url
         eq_(
             insp.identity_key,
-            (User, (u1.id, ), get_url(s.get_bind(mapper=User)),)
+            (User, (u1.id, ), db_url,)
         )
 
     def test_persistence_states(self):
