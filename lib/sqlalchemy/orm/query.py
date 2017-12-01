@@ -799,7 +799,7 @@ class Query(object):
             {"stream_results": True,
              "max_row_buffer": count})
 
-    def get(self, ident):
+    def get(self, ident, **kwargs):
         """Return an instance based on the given primary key identifier,
         or ``None`` if not found.
 
@@ -856,9 +856,9 @@ class Query(object):
         :return: The object instance, or ``None``.
 
         """
-        return self._get_impl(ident, loading.load_on_ident)
+        return self._get_impl(ident, loading.load_on_ident, **kwargs)
 
-    def _get_impl(self, ident, fallback_fn):
+    def _get_impl(self, ident, fallback_fn, **kwargs):
         # convert composite types to individual args
         if hasattr(ident, '__composite_values__'):
             ident = ident.__composite_values__()
@@ -873,7 +873,7 @@ class Query(object):
                 "primary key for query.get(); primary key columns are %s" %
                 ','.join("'%s'" % c for c in mapper.primary_key))
 
-        key = mapper.identity_key_from_primary_key(ident) + (get_url(self.session.get_bind(mapper)),)
+        key = mapper.identity_key_from_primary_key(ident) + (get_url(self.session.get_bind(mapper, **kwargs)),)
 
         if not self._populate_existing and \
                 not mapper.always_refresh and \

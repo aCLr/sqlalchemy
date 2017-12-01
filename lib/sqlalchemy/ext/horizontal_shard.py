@@ -63,11 +63,11 @@ class ShardedQuery(Query):
 
     def get(self, ident, **kwargs):
         if self._shard_id is not None:
-            return super(ShardedQuery, self).get(ident)
+            return super(ShardedQuery, self).get(ident, shard_id=self._shard_id)
         else:
             ident = util.to_list(ident)
             for shard_id in self.id_chooser(self, ident):
-                o = self.set_shard(shard_id).get(ident, **kwargs)
+                o = self.set_shard(shard_id).get(ident)
                 if o is not None:
                     return o
             else:

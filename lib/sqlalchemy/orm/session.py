@@ -1258,7 +1258,7 @@ class Session(_SessionClassMethods):
         """
         self._add_bind(table, bind)
 
-    def get_bind(self, mapper=None, clause=None):
+    def get_bind(self, mapper=None, clause=None, **kwargs):
         """Return a "bind" to which this :class:`.Session` is bound.
 
         The "bind" is usually an instance of :class:`.Engine`,
@@ -1615,7 +1615,7 @@ class Session(_SessionClassMethods):
             obj = state.obj()
             if obj is not None:
 
-                instance_key = mapper._identity_key_from_state(state) + (self.transaction.connection(mapper).engine.url,)
+                instance_key = mapper._identity_key_from_state(state) + (self.transaction.connection(mapper, instance=obj).engine.url,)
 
                 if _none_set.intersection(instance_key[1]) and \
                         not mapper.allow_partial_pks or \

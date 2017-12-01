@@ -1385,7 +1385,7 @@ class BulkUpdateFetch(BulkFetch, BulkUpdate):
             attributes.instance_state(session.identity_map[identity_key])
             for identity_key in [
                 target_mapper.identity_key_from_primary_key(
-                    list(primary_key))
+                    list(primary_key)) + (get_url(session.get_bind(mapper=target_mapper)),)
                 for primary_key in self.matched_rows
             ]
             if identity_key in session.identity_map
@@ -1407,7 +1407,7 @@ class BulkDeleteFetch(BulkFetch, BulkDelete):
             # TODO: inline this and call remove_newly_deleted
             # once
             identity_key = target_mapper.identity_key_from_primary_key(
-                list(primary_key))
+                list(primary_key)) + (get_url(session.get_bind(mapper=target_mapper)),)
             if identity_key in session.identity_map:
                 session._remove_newly_deleted(
                     [attributes.instance_state(

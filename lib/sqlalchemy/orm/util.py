@@ -1033,4 +1033,7 @@ def randomize_unitofwork():
 
 
 def get_url(connectable):
-    return getattr(connectable, 'url', connectable.engine.url)
+    try:
+        return connectable.engine.url
+    except AttributeError:
+        return connectable.url
