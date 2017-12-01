@@ -16,6 +16,8 @@ in unitofwork.py.
 
 import operator
 from itertools import groupby, chain
+
+from sqlalchemy.orm.util import get_url
 from .. import sql, util, exc as sa_exc
 from . import attributes, sync, exc as orm_exc, evaluator
 from .base import state_str, _attr_as_key, _entity_descriptor
@@ -276,6 +278,8 @@ def _organize_states_for_save(base_mapper, states, uowtransaction):
         has_identity = bool(state.key)
 
         instance_key = state.key or mapper._identity_key_from_state(state)
+        if len(instance_key) < 3:
+            instance_key += get_url(connection),
 
         row_switch = update_version_id = None
 
