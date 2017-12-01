@@ -1,3 +1,7 @@
+from functools import partial
+
+from mock import mock
+
 from sqlalchemy.testing import eq_, assert_raises, \
     assert_raises_message
 from sqlalchemy.testing.util import gc_collect
@@ -1665,3 +1669,37 @@ class FlushWarningsTest(fixtures.MappedTest):
             "Usage of the '%s'" % method,
             s.commit
         )
+
+
+class TestSessionAdd(_fixtures.FixtureTest):
+    def _make_user_session_and_bind(self):
+        User, users = self.classes.User, self.tables.users
+        mapper(User, users)
+        u = User()
+        u.name = 'foo'
+        return u, create_session(), self.metadata.bind
+
+    def test_with_one_bind(self):
+        u, sess, bind = self._make_user_session_and_bind()
+        sess.add(u)
+        assert attributes.instance_state(u).url is None
+        sess.flush()
+        assert attributes.instance_state(u).url == bind.url
+        sess.rollback()
+
+    def test__with_no_bind(self):
+        u, sess, bind = self._make_user_session_and_bind()
+        with mock.patch('sqlalchemy.orm.session.util') as mocked_util:
+            sess.add(u, with_bind=bind)
+        assert mocked_util.method_calls
+        assert mocked_util.method_calls[0][0] == 'warn'
+        assert mocked_util.method_calls[0][1] == ('Unnecessary usage of `with_bind` argument',)
+        assert attributes.instance_state(u).url is None
+
+    def test_with_another_bind(self):
+        u, _, bind = self._make_user_session_and_bind()
+        sess = Session(binds={self.classes.User: bind})
+        another_bind = sa.create_engine('sqlite:///test_schema.db')
+        assert bind.url != another_bind
+
+        assert_raises(orm_exc.InvalidBind, partial(sess.add(u, with_bind=another_bind)))

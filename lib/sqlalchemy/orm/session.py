@@ -1676,7 +1676,7 @@ class Session(_SessionClassMethods):
             self._deleted.pop(state, None)
             state.deleted = True
 
-    def add(self, instance, _warn=True):
+    def add(self, instance, _warn=True, with_bind=None):
         """Place an object in the ``Session``.
 
         Its state will be persisted to the database on the next flush
@@ -1691,19 +1691,28 @@ class Session(_SessionClassMethods):
 
         try:
             state = attributes.instance_state(instance)
+
+            if with_bind is not None:
+                if not self.__binds:
+                    util.warn("Unnecessary usage of `with_bind` argument")
+                elif with_bind.url != self.bind.url:
+                    raise exc.InvalidBind('got bind, not specified for current session')
+                else:
+                    state.url = with_bind.url
+
         except exc.NO_STATE:
             raise exc.UnmappedInstanceError(instance)
 
         self._save_or_update_state(state)
 
-    def add_all(self, instances):
+    def add_all(self, instances, with_bind=None):
         """Add the given collection of instances to this ``Session``."""
 
         if self._warn_on_events:
             self._flush_warning("Session.add_all()")
 
         for instance in instances:
-            self.add(instance, _warn=False)
+            self.add(instance, _warn=False, with_bind=with_bind)
 
     def _save_or_update_state(self, state):
         self._save_or_update_impl(state)

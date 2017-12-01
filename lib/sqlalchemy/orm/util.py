@@ -1032,10 +1032,13 @@ def randomize_unitofwork():
         dependency.set = RandomSet
 
 
-def get_ident_key_with_db_url(key, connectable):
+def get_ident_key_with_db_url(key, connectable, state=None):
+    try:
+        url = connectable.url
+    except AttributeError:
+        url = connectable.engine.url
     if len(key) != 3:
-        try:
-            key += connectable.url,
-        except AttributeError:
-            key += connectable.engine.url,
+        key += url,
+    elif state is not None and state.url != url:
+        raise sa_exc.IdentifierError('got invalid url')
     return key

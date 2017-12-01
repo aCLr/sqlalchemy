@@ -163,3 +163,7 @@ def _default_unmapped(base, cls):
 
     if not mappers:
         return "Class '%s' is not mapped" % name
+
+
+class InvalidBind(sa_exc.UnboundExecutionError):
+    """Invalid bind was gotten during session operations"""
