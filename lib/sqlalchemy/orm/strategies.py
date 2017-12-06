@@ -612,7 +612,8 @@ class LazyLoader(AbstractRelationshipLoader, util.MemoizedSlots):
             if _none_set.issuperset(ident):
                 return None
 
-            ident_key = self.mapper.identity_key_from_primary_key(ident)
+            ident_key = orm_util.get_ident_key_with_db_url(self.mapper.identity_key_from_primary_key(ident),
+                                                           session.get_bind(mapper=self.mapper))
             instance = loading.get_from_identity(session, ident_key, passive)
             if instance is not None:
                 return instance
@@ -706,6 +707,7 @@ class LazyLoader(AbstractRelationshipLoader, util.MemoizedSlots):
         if self.use_get:
             if self._raise_on_sql:
                 self._invoke_raise_load(state, passive, "raise_on_sql")
+            ident_key = orm_util.get_ident_key_with_db_url(ident_key, session.get_bind(mapper=self.mapper))
             return q(session)._load_on_ident(
                 session.query(self.mapper), ident_key)
 

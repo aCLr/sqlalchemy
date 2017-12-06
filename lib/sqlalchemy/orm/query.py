@@ -30,7 +30,7 @@ from .base import _entity_descriptor, _is_aliased_class, \
 from .path_registry import PathRegistry
 from .util import (
     AliasedClass, ORMAdapter, join as orm_join, with_parent, aliased,
-    _entity_corresponds_to
+    _entity_corresponds_to, get_ident_key_with_db_url
 )
 from .. import sql, util, log, exc as sa_exc, inspect, inspection
 from ..sql.expression import _interpret_as_from
@@ -810,7 +810,7 @@ class Query(object):
             {"stream_results": True,
              "max_row_buffer": count})
 
-    def get(self, ident):
+    def get(self, ident, **kwargs):
         """Return an instance based on the given primary key identifier,
         or ``None`` if not found.
 
@@ -867,9 +867,9 @@ class Query(object):
         :return: The object instance, or ``None``.
 
         """
-        return self._get_impl(ident, loading.load_on_ident)
+        return self._get_impl(ident, loading.load_on_ident, **kwargs)
 
-    def _get_impl(self, ident, fallback_fn):
+    def _get_impl(self, ident, fallback_fn, **kwargs):
         # convert composite types to individual args
         if hasattr(ident, '__composite_values__'):
             ident = ident.__composite_values__()
@@ -883,8 +883,12 @@ class Query(object):
                 "Incorrect number of values in identifier to formulate "
                 "primary key for query.get(); primary key columns are %s" %
                 ','.join("'%s'" % c for c in mapper.primary_key))
-
         key = mapper.identity_key_from_primary_key(ident)
+        try:
+            bind = self.session.get_bind(mapper, **kwargs)
+            key = get_ident_key_with_db_url(key, bind)
+        except KeyError:  # may be raised on `get_bind() method: horizontal_shard.shard_chooser can't detect bind
+            pass
 
         if not self._populate_existing and \
                 not mapper.always_refresh and \

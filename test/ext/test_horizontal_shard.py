@@ -77,7 +77,7 @@ class ShardTest(object):
         def shard_chooser(mapper, instance, clause=None):
             if isinstance(instance, WeatherLocation):
                 return shard_lookup[instance.continent]
-            else:
+            elif instance is not None:
                 return shard_chooser(mapper, instance.location)
 
         def id_chooser(query, ident):

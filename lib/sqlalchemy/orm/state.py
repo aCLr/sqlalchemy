@@ -52,6 +52,15 @@ class InstanceState(interfaces.InspectionAttr):
 
     session_id = None
     key = None
+    _db_url = None
+    """Database url, specific for state.
+    Instance stored in that database.
+    
+    Because of db_url presented within instance key, 
+    all changes of that attribute must be applied using `db_url` property, 
+    which handles key changes. 
+    """
+
     runid = None
     load_options = util.EMPTY_SET
     load_path = ()
@@ -109,6 +118,32 @@ class InstanceState(interfaces.InspectionAttr):
                 for key in self.manager
             )
         )
+
+    @property
+    def db_url(self):
+        """
+        Returns state db_url, if such presented in state instance key.
+        """
+        if self._db_url is None and len(self.key or ()) == 3:
+            self._db_url = self.key[-1]
+        return self._db_url
+
+    @db_url.setter
+    def db_url(self, value):
+        """
+        Sets state db_url. Changes instance key.
+        """
+        if self.key is not None and value is not None:
+            self.key = self.key[0], self.key[1], value
+        self._db_url = value
+
+    @db_url.deleter
+    def db_url(self):
+        """
+        Clears db_url. Changes instance key.
+        """
+        self.key = self.key[0], self.key[1]
+        self._db_url = None
 
     @property
     def transient(self):
