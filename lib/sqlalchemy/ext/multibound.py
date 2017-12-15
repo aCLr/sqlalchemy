@@ -1,7 +1,6 @@
-from sqlalchemy.exc import UnboundExecutionError
 from sqlalchemy.orm.base import _generative
-
-from sqlalchemy.orm import Query, Session
+from sqlalchemy.exc import UnboundExecutionError
+from sqlalchemy.orm import Query, Session, attributes, exc
 
 
 class MultiBoundQuery(Query):
@@ -10,10 +9,10 @@ class MultiBoundQuery(Query):
         self._bind_id = bind_id
 
     def _execute_and_instances(self, querycontext):
-        querycontext.attributes['bind_id'] = self._bind_id
+        querycontext.attributes['bind_id'] = querycontext.identity_token = self._bind_id
         result = self._connection_from_session(
             mapper=self._bind_mapper(),
-            shard_id=self._bind_id
+            bind_id=self._bind_id
         ).execute(
             querycontext.statement,
             self._params
@@ -43,4 +42,16 @@ class MultiBoundSession(Session):
         if binds is not None:
             for k, v in binds.items():
                 self.__binds[k] = v
+
+    def add(self, instance, _warn=True, bind_id=None):
+        if _warn and self._warn_on_events:
+            self._flush_warning("Session.add()")
+
+        try:
+            state = attributes.instance_state(instance)
+        except exc.NO_STATE:
+            raise exc.UnmappedInstanceError(instance)
+        state.identity_token = bind_id
+
+        self._save_or_update_state(state)
 

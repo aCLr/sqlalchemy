@@ -1113,15 +1113,3 @@ def randomize_unitofwork():
     from sqlalchemy.testing.util import RandomSet
     topological.set = unitofwork.set = session.set = mapper.set = \
         dependency.set = RandomSet
-
-
-def get_ident_key_with_db_url(key, connectable, state=None):
-    try:
-        url = connectable.url
-    except AttributeError:
-        url = connectable.engine.url
-    if len(key) != 3:
-        key += url,
-    elif state is not None and state.url != url:
-        raise sa_exc.IdentifierError('got invalid url')
-    return key

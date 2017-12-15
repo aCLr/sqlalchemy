@@ -12,7 +12,7 @@ from .. import util, sql, engine, exc as sa_exc
 from ..sql import util as sql_util, expression
 from . import (
     SessionExtension, attributes, exc, query,
-    loading, identity, util as orm_util
+    loading, identity
 )
 from ..inspection import inspect
 from .base import (
@@ -1283,7 +1283,7 @@ class Session(_SessionClassMethods):
         """
         self._add_bind(table, bind)
 
-    def get_bind(self, mapper=None, clause=None, **kwargs):
+    def get_bind(self, mapper=None, clause=None):
         """Return a "bind" to which this :class:`.Session` is bound.
 
         The "bind" is usually an instance of :class:`.Engine`,
@@ -1672,8 +1672,7 @@ class Session(_SessionClassMethods):
             obj = state.obj()
             if obj is not None:
 
-                instance_key = orm_util.get_ident_key_with_db_url(mapper._identity_key_from_state(state),
-                                                                  self.transaction.connection(mapper, instance=obj))
+                instance_key = mapper._identity_key_from_state(state)
 
                 if _none_set.intersection(instance_key[1]) and \
                         not mapper.allow_partial_pks or \
@@ -1750,7 +1749,7 @@ class Session(_SessionClassMethods):
             if persistent_to_deleted is not None:
                 persistent_to_deleted(self, obj)
 
-    def add(self, instance, _warn=True, db_url=None):
+    def add(self, instance, _warn=True):
         """Place an object in the ``Session``.
 
         Its state will be persisted to the database on the next flush
@@ -1765,21 +1764,19 @@ class Session(_SessionClassMethods):
 
         try:
             state = attributes.instance_state(instance)
-            state.db_url = db_url
-
         except exc.NO_STATE:
             raise exc.UnmappedInstanceError(instance)
 
         self._save_or_update_state(state)
 
-    def add_all(self, instances, db_url=None):
+    def add_all(self, instances):
         """Add the given collection of instances to this ``Session``."""
 
         if self._warn_on_events:
             self._flush_warning("Session.add_all()")
 
         for instance in instances:
-            self.add(instance, _warn=False, db_url=db_url)
+            self.add(instance, _warn=False)
 
     def _save_or_update_state(self, state):
         state._orphaned_outside_of_session = False
@@ -1841,7 +1838,7 @@ class Session(_SessionClassMethods):
             for o, m, st_, dct_ in cascade_states:
                 self._delete_impl(st_, o, False)
 
-    def merge(self, instance, load=True, db_url=None):
+    def merge(self, instance, load=True):
         """Copy the state of a given instance into a corresponding instance
         within this :class:`.Session`.
 
@@ -1905,10 +1902,8 @@ class Session(_SessionClassMethods):
         autoflush = self.autoflush
         try:
             self.autoflush = False
-            state = attributes.instance_state(instance)
-            state.db_url = db_url
             return self._merge(
-                state,
+                attributes.instance_state(instance),
                 attributes.instance_dict(instance),
                 load=load, _recursive=_recursive,
                 _resolve_conflict_map=_resolve_conflict_map)
@@ -2368,8 +2363,7 @@ class Session(_SessionClassMethods):
                 transaction.rollback(_capture_exception=True)
 
     def bulk_save_objects(
-            self, objects, return_defaults=False, update_changed_only=True,
-            db_url=None):
+            self, objects, return_defaults=False, update_changed_only=True):
         """Perform a bulk save of the given list of objects.
 
         The bulk save feature allows mapped objects to be used as the
@@ -2441,23 +2435,16 @@ class Session(_SessionClassMethods):
             :meth:`.Session.bulk_update_mappings`
 
         """
-        def _is_state_new_for_db_url(_state):
-            is_new = _state.key is not None and (db_url is None or db_url == _state.key)
-            _state.db_url = db_url
-            return is_new
-
         for (mapper, isupdate), states in itertools.groupby(
             (attributes.instance_state(obj) for obj in objects),
-            lambda state: (state.mapper,
-                           _is_state_new_for_db_url(state))
+            lambda state: (state.mapper, state.key is not None)
         ):
             self._bulk_save_mappings(
                 mapper, states, isupdate, True,
-                return_defaults, update_changed_only, False, db_url=db_url)
+                return_defaults, update_changed_only, False)
 
     def bulk_insert_mappings(
-            self, mapper, mappings, return_defaults=False, render_nulls=False,
-            db_url=None):
+            self, mapper, mappings, return_defaults=False, render_nulls=False):
         """Perform a bulk insert of the given list of mapping dictionaries.
 
         The bulk insert feature allows plain Python dictionaries to be used as
@@ -2545,10 +2532,9 @@ class Session(_SessionClassMethods):
         """
         self._bulk_save_mappings(
             mapper, mappings, False, False,
-            return_defaults, False, render_nulls,
-            db_url=db_url)
+            return_defaults, False, render_nulls)
 
-    def bulk_update_mappings(self, mapper, mappings, db_url=None):
+    def bulk_update_mappings(self, mapper, mappings):
         """Perform a bulk update of the given list of mapping dictionaries.
 
         The bulk update feature allows plain Python dictionaries to be used as
@@ -2596,12 +2582,11 @@ class Session(_SessionClassMethods):
 
         """
         self._bulk_save_mappings(
-            mapper, mappings, True, False, False, False, False,
-            db_url=db_url)
+            mapper, mappings, True, False, False, False, False)
 
     def _bulk_save_mappings(
             self, mapper, mappings, isupdate, isstates,
-            return_defaults, update_changed_only, render_nulls, db_url=None):
+            return_defaults, update_changed_only, render_nulls):
         mapper = _class_to_mapper(mapper)
         self._flushing = True
 
@@ -2611,11 +2596,11 @@ class Session(_SessionClassMethods):
             if isupdate:
                 persistence._bulk_update(
                     mapper, mappings, transaction,
-                    isstates, update_changed_only, db_url=db_url)
+                    isstates, update_changed_only)
             else:
                 persistence._bulk_insert(
                     mapper, mappings, transaction,
-                    isstates, return_defaults, render_nulls, db_url=db_url)
+                    isstates, return_defaults, render_nulls)
             transaction.commit()
 
         except:

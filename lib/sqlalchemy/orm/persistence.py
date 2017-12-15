@@ -16,8 +16,6 @@ in unitofwork.py.
 
 import operator
 from itertools import groupby, chain
-
-from sqlalchemy.orm.util import get_ident_key_with_db_url
 from .. import sql, util, exc as sa_exc
 from . import attributes, sync, exc as orm_exc, evaluator
 from .base import state_str, _entity_descriptor
@@ -28,8 +26,7 @@ from . import loading
 
 def _bulk_insert(
         mapper, mappings, session_transaction, isstates, return_defaults,
-        render_nulls,
-        db_url=None):
+        render_nulls):
     base_mapper = mapper.base_mapper
 
     cached_connections = _cached_connection_dict(base_mapper)
@@ -77,14 +74,12 @@ def _bulk_insert(
         for state, dict_ in states:
             state.key = (
                 identity_cls,
-                tuple([dict_[key] for key in identity_props]),
-                db_url,
+                tuple([dict_[key] for key in identity_props])
             )
 
 
 def _bulk_update(mapper, mappings, session_transaction,
-                 isstates, update_changed_only,
-                 db_url=None):
+                 isstates, update_changed_only):
     base_mapper = mapper.base_mapper
 
     cached_connections = _cached_connection_dict(base_mapper)
@@ -292,8 +287,7 @@ def _organize_states_for_save(base_mapper, states, uowtransaction):
 
         has_identity = bool(state.key)
 
-        instance_key = get_ident_key_with_db_url(state.key or mapper._identity_key_from_state(state),
-                                                 connection)
+        instance_key = state.key or mapper._identity_key_from_state(state)
 
         row_switch = update_version_id = None
 
@@ -1408,7 +1402,7 @@ class BulkEvaluate(BulkUD):
 
         # TODO: detect when the where clause is a trivial primary key match
         self.matched_objects = [
-            obj for (cls, pk, url), obj in
+            obj for (cls, pk, identity_token), obj in
             query.session.identity_map.items()
             if issubclass(cls, target_cls) and
             eval_condition(obj)]
@@ -1587,8 +1581,8 @@ class BulkUpdateFetch(BulkFetch, BulkUpdate):
         states = set([
             attributes.instance_state(session.identity_map[identity_key])
             for identity_key in [
-                get_ident_key_with_db_url(target_mapper.identity_key_from_primary_key(list(primary_key)),
-                                          session.get_bind(mapper=target_mapper), )
+                target_mapper.identity_key_from_primary_key(
+                    list(primary_key))
                 for primary_key in self.matched_rows
             ]
             if identity_key in session.identity_map
@@ -1613,9 +1607,8 @@ class BulkDeleteFetch(BulkFetch, BulkDelete):
         for primary_key in self.matched_rows:
             # TODO: inline this and call remove_newly_deleted
             # once
-            identity_key = get_ident_key_with_db_url(
-                target_mapper.identity_key_from_primary_key(list(primary_key)),
-                session.get_bind(mapper=target_mapper))
+            identity_key = target_mapper.identity_key_from_primary_key(
+                list(primary_key))
             if identity_key in session.identity_map:
                 session._remove_newly_deleted(
                     [attributes.instance_state(
