@@ -340,6 +340,7 @@ def _instance_processor(
     session_id = context.session.hash_key
     version_check = context.version_check
     runid = context.runid
+    identity_token = context.identity_token
 
     if refresh_state:
         refresh_identity_key = refresh_state.key
@@ -356,7 +357,6 @@ def _instance_processor(
         is_not_primary_key = _none_set.issuperset
     else:
         is_not_primary_key = _none_set.intersection
-    url = result.connection.engine.url
 
     def _instance(row):
 
@@ -375,7 +375,7 @@ def _instance_processor(
             identitykey = (
                 identity_class,
                 tuple([row[column] for column in pk_cols]),
-                url,
+                identity_token,
             )
 
             instance = session_identity_map.get(identitykey)
@@ -409,6 +409,7 @@ def _instance_processor(
                 dict_ = instance_dict(instance)
                 state = instance_state(instance)
                 state.key = identitykey
+                state.identity_token = identity_token
 
                 # attach instance to session.
                 state.session_id = session_id

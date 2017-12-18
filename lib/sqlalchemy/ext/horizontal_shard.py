@@ -15,6 +15,7 @@ the source distribution.
 
 """
 
+from .. import inspect
 from .. import util
 from ..orm.session import Session
 from ..orm.query import Query
@@ -42,7 +43,7 @@ class ShardedQuery(Query):
 
     def _execute_and_instances(self, context):
         def iter_for_shard(shard_id):
-            context.attributes['shard_id'] = shard_id
+            context.attributes['shard_id'] = context.identity_token = shard_id
             result = self._connection_from_session(
                 mapper=self._mapper_zero(),
                 shard_id=shard_id).execute(
@@ -63,7 +64,7 @@ class ShardedQuery(Query):
 
     def get(self, ident, **kwargs):
         if self._shard_id is not None:
-            return super(ShardedQuery, self).get(ident, shard_id=self._shard_id)
+            return super(ShardedQuery, self).get(ident)
         else:
             ident = util.to_list(ident)
             for shard_id in self.id_chooser(self, ident):

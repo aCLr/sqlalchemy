@@ -281,9 +281,9 @@ class IdentityKeyTest(_fixtures.FixtureTest):
         mapper(User, users)
 
         key = orm_util.identity_key(User, [1])
-        eq_(key, (User, (1,)))
+        eq_(key, (User, (1,), None))
         key = orm_util.identity_key(User, ident=[1])
-        eq_(key, (User, (1,)))
+        eq_(key, (User, (1,), None))
 
     def test_identity_key_scalar(self):
         User, users = self.classes.User, self.tables.users
@@ -291,9 +291,9 @@ class IdentityKeyTest(_fixtures.FixtureTest):
         mapper(User, users)
 
         key = orm_util.identity_key(User, 1)
-        eq_(key, (User, (1,)))
+        eq_(key, (User, (1,), None))
         key = orm_util.identity_key(User, ident=1)
-        eq_(key, (User, (1,)))
+        eq_(key, (User, (1,), None))
 
     def test_identity_key_2(self):
         users, User = self.tables.users, self.classes.User
@@ -304,7 +304,7 @@ class IdentityKeyTest(_fixtures.FixtureTest):
         s.add(u)
         s.flush()
         key = orm_util.identity_key(instance=u)
-        eq_(key, (User, (u.id,)))
+        eq_(key, (User, (u.id,), None))
 
     def test_identity_key_3(self):
         User, users = self.classes.User, self.tables.users
@@ -313,7 +313,7 @@ class IdentityKeyTest(_fixtures.FixtureTest):
 
         row = {users.c.id: 1, users.c.name: "Frank"}
         key = orm_util.identity_key(User, row=row)
-        eq_(key, (User, (1,)))
+        eq_(key, (User, (1,), None))
 
 
 class PathRegistryTest(_fixtures.FixtureTest):

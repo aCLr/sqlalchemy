@@ -1536,9 +1536,8 @@ class NaturalPKRollbackTest(fixtures.MappedTest):
 
         assert u1 in s
         assert u2 in s
-        db_url = s.get_bind(mapper=User).url
-        assert s.identity_map[(User, ('u1',), db_url,)] is u1
-        assert s.identity_map[(User, ('u2',), db_url,)] is u2
+        assert s.identity_map[(User, ('u1',), None,)] is u1
+        assert s.identity_map[(User, ('u2',), None,)] is u2
 
     def test_multiple_key_replaced_by_update(self):
         users, User = self.tables.users, self.classes.User
@@ -1569,10 +1568,9 @@ class NaturalPKRollbackTest(fixtures.MappedTest):
         assert u2 in s
         assert u3 in s
 
-        db_url = s.get_bind(mapper=User).url
-        assert s.identity_map[(User, ('u1',), db_url,)] is u1
-        assert s.identity_map[(User, ('u2',), db_url,)] is u2
-        assert s.identity_map[(User, ('u3',), db_url,)] is u3
+        assert s.identity_map[(User, ('u1',), None,)] is u1
+        assert s.identity_map[(User, ('u2',), None,)] is u2
+        assert s.identity_map[(User, ('u3',), None,)] is u3
 
     def test_key_replaced_by_oob_insert(self):
         users, User = self.tables.users, self.classes.User
@@ -1596,5 +1594,4 @@ class NaturalPKRollbackTest(fixtures.MappedTest):
 
         assert u1 in s
         assert u2 not in s
-        db_url = s.get_bind(mapper=User).url
-        assert s.identity_map[(User, ('u1',), db_url,)] is u1
+        assert s.identity_map[(User, ('u1',), None,)] is u1

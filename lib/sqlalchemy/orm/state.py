@@ -49,7 +49,7 @@ class InstanceState(interfaces.InspectionAttr):
 
     session_id = None
     key = None
-    _url = None
+    identity_token = None
     runid = None
     load_options = util.EMPTY_SET
     load_path = ()
@@ -107,23 +107,6 @@ class InstanceState(interfaces.InspectionAttr):
                 for key in self.manager
             )
         )
-
-    @property
-    def url(self):
-        if self._url is None and len(self.key or ()) == 3:
-            self._url = self.key[-1]
-        return self._url
-
-    @url.setter
-    def url(self, value):
-        if self.key is not None:
-            self.key = self.key[0], self.key[1], value
-        self._url = value
-
-    @url.deleter
-    def url(self):
-        self.key = None
-        self._url = None
 
     @property
     def transient(self):

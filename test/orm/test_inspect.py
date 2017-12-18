@@ -487,10 +487,9 @@ class TestORMInspection(_fixtures.FixtureTest):
         s.add(u1)
         s.flush()
         insp = inspect(u1)
-        db_url = s.get_bind(mapper=User).url
         eq_(
             insp.identity_key,
-            (User, (u1.id, ), db_url,)
+            (User, (u1.id, ), None,)
         )
 
     def test_persistence_states(self):
