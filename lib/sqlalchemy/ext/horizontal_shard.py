@@ -14,7 +14,7 @@ For a usage example, see the :ref:`examples_sharding` example included in
 the source distribution.
 
 """
-
+from .. import inspect
 from .. import util
 from ..orm.session import Session
 from ..orm.query import Query
@@ -42,7 +42,7 @@ class ShardedQuery(Query):
 
     def _execute_and_instances(self, context):
         def iter_for_shard(shard_id):
-            context.attributes['shard_id'] = shard_id
+            context.attributes['shard_id'] = context.identity_token = shard_id
             result = self._connection_from_session(
                 mapper=self._mapper_zero(),
                 shard_id=shard_id).execute(
@@ -75,7 +75,13 @@ class ShardedQuery(Query):
                 else:
                     return None
 
-        return super(ShardedQuery, self)._get_impl(ident, _fallback)
+        if self._shard_id is not None:
+            identity_token = self._shard_id
+        else:
+            identity_token = None
+
+        return super(ShardedQuery, self)._get_impl(
+            ident, _fallback, identity_token=identity_token)
 
 
 class ShardedSession(Session):
@@ -128,7 +134,7 @@ class ShardedSession(Session):
     def get_bind(self, mapper, shard_id=None,
                  instance=None, clause=None, **kw):
         if shard_id is None:
-            shard_id = self.shard_chooser(mapper, instance, clause=clause)
+            shard_id = self._choose_shard_and_assign(mapper, instance)
         return self.__binds[shard_id]
 
     def bind_shard(self, shard_id, bind):
