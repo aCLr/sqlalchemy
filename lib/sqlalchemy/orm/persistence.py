@@ -1062,7 +1062,7 @@ def _connections_for_states(base_mapper, uowtransaction, states):
 
     for state in _sort_states(states):
         if connection_callable:
-            connection = connection_callable(base_mapper, state.obj())
+            connection = connection_callable(base_mapper, state.obj(), bind_id=state.identity_token)
 
         mapper = state.manager.mapper
 
