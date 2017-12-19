@@ -32,10 +32,10 @@ def _bulk_insert(
 
     cached_connections = _cached_connection_dict(base_mapper)
 
-    if session_transaction.session.connection_callable:
-        raise NotImplementedError(
-            "connection_callable / per-instance sharding "
-            "not supported in bulk_insert()")
+    # if session_transaction.session.connection_callable:
+    #     raise NotImplementedError(
+    #         "connection_callable / per-instance sharding "
+    #         "not supported in bulk_insert()")
 
     if isstates:
         if return_defaults:
@@ -103,10 +103,10 @@ def _bulk_update(mapper, mappings, session_transaction,
     else:
         mappings = list(mappings)
 
-    if session_transaction.session.connection_callable:
-        raise NotImplementedError(
-            "connection_callable / per-instance sharding "
-            "not supported in bulk_update()")
+    # if session_transaction.session.connection_callable:
+    #     raise NotImplementedError(
+    #         "connection_callable / per-instance sharding "
+    #         "not supported in bulk_update()")
 
     connection = session_transaction.connection(base_mapper, bind_id=bind_id)
 

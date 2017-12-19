@@ -133,13 +133,17 @@ class ShardedSession(Session):
         self.__binds[shard_id] = bind
 
     def bulk_insert_mappings(self, mapper, mappings, return_defaults=False, bind_id=None):
+        if bind_id is None:
+            raise ValueError('bind_id not specified')
         self._bulk_save_mappings(
             mapper, mappings, False, False, return_defaults, False, bind_id=bind_id)
 
     def bulk_update_mappings(self, mapper, mappings, bind_id=None):
+        if bind_id is None:
+            raise ValueError('bind_id not specified')
         self._bulk_save_mappings(mapper, mappings, True, False, False, False, bind_id=bind_id)
 
-    def bulk_save_objects(self, objects, return_defaults=False, update_changed_only=True, bind_id=None):
+    def bulk_save_objects(self, objects, return_defaults=False, update_changed_only=True):
         for (mapper, isupdate, identity_token), states in groupby(
                 (instance_state(obj) for obj in objects),
             lambda state: (state.mapper, state.key is not None, state.identity_token)
