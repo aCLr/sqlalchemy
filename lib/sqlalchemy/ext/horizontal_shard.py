@@ -14,8 +14,9 @@ For a usage example, see the :ref:`examples_sharding` example included in
 the source distribution.
 
 """
+from itertools import groupby
 
-from .. import inspect
+from ..orm.attributes import instance_state
 from .. import util
 from ..orm.session import Session
 from ..orm.query import Query
@@ -130,3 +131,32 @@ class ShardedSession(Session):
 
     def bind_shard(self, shard_id, bind):
         self.__binds[shard_id] = bind
+
+    def bulk_insert_mappings(self, mapper, mappings, return_defaults=False, bind_id=None):
+        self._bulk_save_mappings(
+            mapper, mappings, False, False, return_defaults, False, bind_id=bind_id)
+
+    def bulk_update_mappings(self, mapper, mappings, bind_id=None):
+        self._bulk_save_mappings(mapper, mappings, True, False, False, False, bind_id=bind_id)
+
+    def bulk_save_objects(self, objects, return_defaults=False, update_changed_only=True, bind_id=None):
+        for (mapper, isupdate, identity_token), states in groupby(
+                (instance_state(obj) for obj in objects),
+            lambda state: (state.mapper, state.key is not None, state.identity_token)
+        ):
+            self._bulk_save_mappings(
+                mapper, states, isupdate, True,
+                return_defaults, update_changed_only, identity_token)
+
+    # def _bulk_save_mappings(self, mapper, mappings, isupdate, isstates, return_defaults, update_changed_only, bind_id):
+        # if isstates:
+        #     def state_bind(state):
+        #         if bind_id is not None:
+        #             return bind_id
+        #         return state.identity_key
+        #
+        #     for bind_id, states in groupby(mappings, state_bind):
+        #         super()._bulk_save_mappings(mapper, states, isupdate, isstates, return_defaults, update_changed_only, bind_id)
+        # else:
+        #     super()._bulk_save_mappings(mapper, mappings, isupdate, isstates, return_defaults, update_changed_only, bind_id)
+

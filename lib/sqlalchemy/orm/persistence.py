@@ -27,7 +27,7 @@ from . import loading
 
 
 def _bulk_insert(
-        mapper, mappings, session_transaction, isstates, return_defaults):
+        mapper, mappings, session_transaction, isstates, return_defaults, bind_id):
     base_mapper = mapper.base_mapper
 
     cached_connections = _cached_connection_dict(base_mapper)
@@ -46,7 +46,7 @@ def _bulk_insert(
     else:
         mappings = list(mappings)
 
-    connection = session_transaction.connection(base_mapper)
+    connection = session_transaction.connection(base_mapper, bind_id=bind_id)
     for table, super_mapper in base_mapper._sorted_tables.items():
         if not mapper.isa(super_mapper):
             continue
@@ -79,7 +79,7 @@ def _bulk_insert(
 
 
 def _bulk_update(mapper, mappings, session_transaction,
-                 isstates, update_changed_only):
+                 isstates, update_changed_only, bind_id):
     base_mapper = mapper.base_mapper
 
     cached_connections = _cached_connection_dict(base_mapper)
@@ -108,7 +108,7 @@ def _bulk_update(mapper, mappings, session_transaction,
             "connection_callable / per-instance sharding "
             "not supported in bulk_update()")
 
-    connection = session_transaction.connection(base_mapper)
+    connection = session_transaction.connection(base_mapper, bind_id=bind_id)
 
     for table, super_mapper in base_mapper._sorted_tables.items():
         if not mapper.isa(super_mapper):
