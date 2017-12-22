@@ -247,33 +247,39 @@ first()
 
     """
     if args:
-        if len(args) == 1:
+        row = None
+        largs = len(args)
+        if largs == 1:
             class_ = args[0]
             try:
                 row = kwargs.pop("row")
             except KeyError:
                 ident = kwargs.pop("ident")
-        elif len(args) == 2:
-            class_, ident = args
-        elif len(args) == 3:
+        elif largs in (2, 3):
             class_, ident = args
         else:
             raise sa_exc.ArgumentError(
                 "expected up to three positional arguments, "
-                "got %s" % len(args))
+                "got %s" % largs)
+
+        identity_token = kwargs.pop("identity_token", None)
         if kwargs:
             raise sa_exc.ArgumentError("unknown keyword arguments: %s"
                                        % ", ".join(kwargs))
         mapper = class_mapper(class_)
-        if "ident" in locals():
-            return mapper.identity_key_from_primary_key(util.to_list(ident))
-        return mapper.identity_key_from_row(row)
-    instance = kwargs.pop("instance")
-    if kwargs:
-        raise sa_exc.ArgumentError("unknown keyword arguments: %s"
-                                   % ", ".join(kwargs.keys))
-    mapper = object_mapper(instance)
-    return mapper.identity_key_from_instance(instance)
+        if row is None:
+            return mapper.identity_key_from_primary_key(
+                util.to_list(ident), identity_token=identity_token)
+        else:
+            return mapper.identity_key_from_row(
+                row, identity_token=identity_token)
+    else:
+        instance = kwargs.pop("instance")
+        if kwargs:
+            raise sa_exc.ArgumentError("unknown keyword arguments: %s"
+                                       % ", ".join(kwargs.keys))
+        mapper = object_mapper(instance)
+        return mapper.identity_key_from_instance(instance)
 
 
 class ORMAdapter(sql_util.ColumnAdapter):

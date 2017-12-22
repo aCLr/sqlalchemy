@@ -59,6 +59,7 @@ class InstanceState(interfaces.InspectionAttr):
     deleted = False
     _load_pending = False
     is_instance = True
+    identity_token = None
 
     callables = ()
     """A namespace where a per-state loader callable can be associated.

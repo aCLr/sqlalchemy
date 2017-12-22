@@ -25,15 +25,15 @@ from . import loading
 
 
 def _bulk_insert(
-        mapper, mappings, session_transaction, isstates, return_defaults):
+        mapper, mappings, session_transaction, isstates, return_defaults, bind_id):
     base_mapper = mapper.base_mapper
 
     cached_connections = _cached_connection_dict(base_mapper)
 
-    if session_transaction.session.connection_callable:
-        raise NotImplementedError(
-            "connection_callable / per-instance sharding "
-            "not supported in bulk_insert()")
+    # if session_transaction.session.connection_callable:
+    #     raise NotImplementedError(
+    #         "connection_callable / per-instance sharding "
+    #         "not supported in bulk_insert()")
 
     if isstates:
         if return_defaults:
@@ -44,7 +44,7 @@ def _bulk_insert(
     else:
         mappings = list(mappings)
 
-    connection = session_transaction.connection(base_mapper)
+    connection = session_transaction.connection(base_mapper, bind_id=bind_id)
     for table, super_mapper in base_mapper._sorted_tables.items():
         if not mapper.isa(super_mapper):
             continue
@@ -77,7 +77,7 @@ def _bulk_insert(
 
 
 def _bulk_update(mapper, mappings, session_transaction,
-                 isstates, update_changed_only):
+                 isstates, update_changed_only, bind_id):
     base_mapper = mapper.base_mapper
 
     cached_connections = _cached_connection_dict(base_mapper)
@@ -101,12 +101,12 @@ def _bulk_update(mapper, mappings, session_transaction,
     else:
         mappings = list(mappings)
 
-    if session_transaction.session.connection_callable:
-        raise NotImplementedError(
-            "connection_callable / per-instance sharding "
-            "not supported in bulk_update()")
+    # if session_transaction.session.connection_callable:
+    #     raise NotImplementedError(
+    #         "connection_callable / per-instance sharding "
+    #         "not supported in bulk_update()")
 
-    connection = session_transaction.connection(base_mapper)
+    connection = session_transaction.connection(base_mapper, bind_id=bind_id)
 
     for table, super_mapper in base_mapper._sorted_tables.items():
         if not mapper.isa(super_mapper):
@@ -1059,7 +1059,7 @@ def _connections_for_states(base_mapper, uowtransaction, states):
 
     for state in _sort_states(states):
         if connection_callable:
-            connection = connection_callable(base_mapper, state.obj())
+            connection = connection_callable(base_mapper, state.obj(), bind_id=state.identity_token)
 
         mapper = state.manager.mapper
 
@@ -1202,7 +1202,7 @@ class BulkEvaluate(BulkUD):
 
         # TODO: detect when the where clause is a trivial primary key match
         self.matched_objects = [
-            obj for (cls, pk), obj in
+            obj for (cls, pk, identity_token), obj in
             query.session.identity_map.items()
             if issubclass(cls, target_cls) and
             eval_condition(obj)]

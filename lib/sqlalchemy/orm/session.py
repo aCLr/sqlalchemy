@@ -2427,7 +2427,7 @@ class Session(_SessionClassMethods):
 
     def _bulk_save_mappings(
             self, mapper, mappings, isupdate, isstates,
-            return_defaults, update_changed_only):
+            return_defaults, update_changed_only, bind_id):
         mapper = _class_to_mapper(mapper)
         self._flushing = True
 
@@ -2437,10 +2437,10 @@ class Session(_SessionClassMethods):
             if isupdate:
                 persistence._bulk_update(
                     mapper, mappings, transaction,
-                    isstates, update_changed_only)
+                    isstates, update_changed_only, bind_id)
             else:
                 persistence._bulk_insert(
-                    mapper, mappings, transaction, isstates, return_defaults)
+                    mapper, mappings, transaction, isstates, return_defaults, bind_id)
             transaction.commit()
 
         except:
