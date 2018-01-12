@@ -367,6 +367,10 @@ class Query(object):
             )
         return self._entity_zero()
 
+    @_generative
+    def finalize_instance_loading(self, instance_key):
+        pass
+
     def __all_equivs(self):
         equivs = {}
         for ent in self._mapper_entities:
